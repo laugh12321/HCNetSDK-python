@@ -57,9 +57,10 @@ class NetClient(metaclass=Singleton):
         try:
             cls.sdk = load_library(netsdkdllpath)
             cls.play_sdk = load_library(playsdkdllpath)
-            cls.coding_format = 'gbk' if sys_platform == 'windows' else 'utf-8'
         except OSError as e:
             print('动态库加载失败')
+
+        cls.coding_format = 'gbk' if sys_platform == 'windows' else 'utf-8'
 
     @classmethod
     def SetSDKInitCfg(cls) -> None:
@@ -371,3 +372,70 @@ class NetClient(metaclass=Singleton):
             bool: TRUE表示成功, FALSE表示失败
         """        
         return cls.play_sdk.PlayM4_FreePort(port)
+
+    @classmethod
+    def GetDVRConfig_NFS(cls, lUserId: c_long) -> list[dict[str, str]]:
+        """
+        Get NFS disks configuration
+
+        Args:
+            lUserId (c_long): a user id as returned from NET_DVR_Login_V40
+
+        Returns:
+            list[dict[str, str]]: A list of NFS disks: [{"host_ip_addr": "...", "directory": "..."}, ...]
+        """
+        nfs_cfg = NET_DVR_NFSCFG()
+        bytes_returned = c_uint()
+
+        ok = cls.sdk.NET_DVR_GetDVRConfig(
+            lUserId,
+            NET_DVR_Command.NET_DVR_GET_NFSCFG,
+            1,
+            byref(nfs_cfg),
+            sizeof(nfs_cfg),
+            byref(bytes_returned),
+        )
+
+        return [
+            {
+                "host_ip_addr": disk.sNfsHostIPAddr.decode(),
+                "directory": bytes(disk.sNfsDirectory).decode().split("\x00")[0]
+            }
+            for disk in nfs_cfg.struNfsDiskParam
+        ] if ok else []
+
+    @classmethod
+    def SetDVRConfig_NFS(cls, lUserId: c_long, nfs_cfg: list[dict[str, str]]) -> bool:
+        """
+        Set NFS disks configuration
+
+        Args:
+            lUserId (c_long): a user id as returned from NET_DVR_Login_V40
+            nfs_cfg (list[dict[str, str]]): A list of NFS disks: [{"host_ip_addr": "...", "directory": "..."}, ...]
+
+        Returns:
+            bool: True if successful, else False
+        """
+        c_byte_array = c_byte * MagicNumber.PATHNAME_LEN
+        stru_nfs_disk_param = (NET_DVR_SINGLE_NFS * MagicNumber.MAX_NFS_DISK)(*[
+            NET_DVR_SINGLE_NFS(
+                sNfsHostIPAddr=disk["host_ip_addr"].encode(),
+                sNfsDirectory=c_byte_array.from_buffer(
+                    create_string_buffer(disk["directory"].encode(), MagicNumber.PATHNAME_LEN),
+                )
+            ) for disk in nfs_cfg
+        ])
+        _nfs_cfg = NET_DVR_NFSCFG(
+            # dwSize expects a size of the whole struct (including itself)
+            dwSize=sizeof(stru_nfs_disk_param) + sizeof(c_uint32),
+            struNfsDiskParam=stru_nfs_disk_param
+        )
+
+        ok = cls.sdk.NET_DVR_SetDVRConfig(
+            lUserId,
+            NET_DVR_Command.NET_DVR_SET_NFSCFG,
+            1,
+            byref(_nfs_cfg),
+            sizeof(_nfs_cfg),
+        )
+        return bool(ok)
