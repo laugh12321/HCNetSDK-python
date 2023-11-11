@@ -371,3 +371,24 @@ class NetClient(metaclass=Singleton):
             bool: TRUE表示成功, FALSE表示失败
         """        
         return cls.play_sdk.PlayM4_FreePort(port)
+
+    @classmethod
+    def GetDVRConfig_NFS(cls, lUserId: c_long):
+        """
+
+        Args:
+            lUserId:
+
+        Returns:
+
+        """
+        buf = create_string_buffer(2048)
+        bytes_returned = c_uint()
+        cls.sdk.NET_DVR_GetDVRConfig(
+            lUserId,
+            NET_DVR_Command.NET_DVR_GET_NFSCFG,
+            1,
+            byref(buf),
+            sizeof(buf),
+            byref(bytes_returned),
+        )

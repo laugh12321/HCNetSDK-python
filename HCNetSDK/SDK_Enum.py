@@ -26,6 +26,13 @@
 from enum import IntEnum
 
 
+class Macros(IntEnum):
+    """
+    Macros (starting from HCNetSDK.h:97)
+    """
+    PATHNAME_LEN = 128
+
+
 class PTZCommand(IntEnum):
     """
     云台控制命令
@@ -105,6 +112,7 @@ class NET_DVR_Command(IntEnum):
     设备配置命令, 不同的获取功能对应不同的结构体和命令号
     """
     NET_DVR_GET_TRACK_PARAMCFG = 197              # 获取球机本地菜单规则, 对应结构体 NET_DVR_TRACK_PARAMCFG
+    NET_DVR_GET_NFSCFG = 231                      # Sorry cannot write Chinese, this one is for getting NFS storage settings, returns NET_DVR_NFSCFG struct
     NET_DVR_GET_PTZPOS = 293                      # 获取IP快球PTZ参数， 对应结构体 NET_DVR_PTZPOS
     NET_DVR_GET_PTZSCOPE = 294                    # 获取IP快球PTZ范围参数， 对应结构体 NET_DVR_PTZSCOPE
     NET_DVR_GET_MOTION_TRACK_CFG = 3228           # 获取网络球机跟踪参数， 对应结构体 NET_DVR_MOTION_TRACK_CFG

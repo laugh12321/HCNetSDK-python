@@ -81,6 +81,18 @@ class NET_DVR_PTZPOS(Structure):
         ("wZoomPos", c_uint16)  # Z参数（变倍参数）
     ]
 
+class NET_DVR_SINGLE_NFS(Structure):
+    _fields_ = [
+        ("sNfsHostIPAddr", c_char * 16),
+        ("sNfsDirectory", c_byte * 16),
+    ]
+
+
+class NET_DVR_NFSCFG(Structure):
+    _fields_ = [
+
+    ]
+
 
 class NET_DVR_DEVICEINFO_V30(Structure):
     _fields_ = [
