@@ -405,30 +405,37 @@ class NetClient(metaclass=Singleton):
         ] if ok else []
 
     @classmethod
-    def SetDVRConfig_NFS(cls, lUserId: c_long, nfs_cfg: list[dict[str, str]]):
+    def SetDVRConfig_NFS(cls, lUserId: c_long, nfs_cfg: list[dict[str, str]]) -> bool:
         """
         Set NFS disks configuration
 
         Args:
             lUserId (c_long): a user id as returned from NET_DVR_Login_V40
+            nfs_cfg (list[dict[str, str]]): A list of NFS disks: [{"host_ip_addr": "...", "directory": "..."}, ...]
 
         Returns:
-
+            bool: True if successful, else False
         """
-        # c_byte_Array_128 = ctypes.c_byte * 128
-        # NET_DVR_NFSCFG(
-        #     dwSize=0,
-        #     struNfsDiskParam=[NET_DVR_SINGLE_NFS(b"192.168.1.2", c_byte_Array_128.from_buffer(
-        #         ctypes.create_unicode_buffer("/srv/nfs/ici", 128)))],
-        # ),
+        c_byte_array = c_byte * MagicNumber.PATHNAME_LEN
+        stru_nfs_disk_param = (NET_DVR_SINGLE_NFS * MagicNumber.MAX_NFS_DISK)(*[
+            NET_DVR_SINGLE_NFS(
+                sNfsHostIPAddr=disk["host_ip_addr"].encode(),
+                sNfsDirectory=c_byte_array.from_buffer(
+                    create_string_buffer(disk["directory"].encode(), MagicNumber.PATHNAME_LEN),
+                )
+            ) for disk in nfs_cfg
+        ])
+        _nfs_cfg = NET_DVR_NFSCFG(
+            # dwSize expects a size of the whole struct (including itself)
+            dwSize=sizeof(stru_nfs_disk_param) + sizeof(c_uint32),
+            struNfsDiskParam=stru_nfs_disk_param
+        )
 
         ok = cls.sdk.NET_DVR_SetDVRConfig(
             lUserId,
             NET_DVR_Command.NET_DVR_SET_NFSCFG,
             1,
-            byref(nfs_cfg),
-            sizeof(nfs_cfg),
+            byref(_nfs_cfg),
+            sizeof(_nfs_cfg),
         )
-        print(ok)
-
-        return
+        return bool(ok)

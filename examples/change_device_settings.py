@@ -1,5 +1,3 @@
-import ctypes
-
 import HCNetSDK
 
 sdk = HCNetSDK.NetClient()
@@ -16,7 +14,16 @@ print(nfs_disks)
 
 sdk.SetDVRConfig_NFS(
     user_id,
-    [{}],
+    [
+        {'host_ip_addr': '192.168.1.2', 'directory': '/srv/nfs/ici'},
+        {'host_ip_addr': '0.0.0.0', 'directory': ''},
+        {'host_ip_addr': '0.0.0.0', 'directory': ''},
+        {'host_ip_addr': '0.0.0.0', 'directory': ''},
+        {'host_ip_addr': '0.0.0.0', 'directory': ''},
+        {'host_ip_addr': '0.0.0.0', 'directory': ''},
+        {'host_ip_addr': '0.0.0.0', 'directory': ''},
+        {'host_ip_addr': '0.0.0.0', 'directory': ''}
+    ],
 )
 
 sdk.Logout(user_id)
