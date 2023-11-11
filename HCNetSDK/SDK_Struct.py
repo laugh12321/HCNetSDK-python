@@ -27,6 +27,8 @@ import os
 import platform
 from ctypes import *
 
+from .SDK_Enum import MagicNumber
+
 sys_platform = platform.system().lower().strip()
 
 lib_path_dict = {
@@ -81,16 +83,18 @@ class NET_DVR_PTZPOS(Structure):
         ("wZoomPos", c_uint16)  # Z参数（变倍参数）
     ]
 
+
 class NET_DVR_SINGLE_NFS(Structure):
     _fields_ = [
         ("sNfsHostIPAddr", c_char * 16),
-        ("sNfsDirectory", c_byte * 16),
+        ("sNfsDirectory", c_byte * MagicNumber.PATHNAME_LEN),
     ]
 
 
 class NET_DVR_NFSCFG(Structure):
     _fields_ = [
-
+        ("dwSize", c_uint32),
+        ("struNfsDiskParam", NET_DVR_SINGLE_NFS * MagicNumber.MAX_NFS_DISK)
     ]
 
 
